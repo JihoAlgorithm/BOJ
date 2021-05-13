@@ -3,5 +3,8 @@
 .classpath
 .project
 
-# java
+# VSCODE
+.vscode/
+
+# Java
 bin/
