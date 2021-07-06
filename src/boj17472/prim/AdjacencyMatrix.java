@@ -4,7 +4,6 @@ class AdjacencyMatrix {
     
     private static int N, M, ISLAND;
 
-    private static final int SIZE = 0;
     private static final int DEFAULT = -1;
     private static final int BIT = 4;
     private static final int MASK = 15;
