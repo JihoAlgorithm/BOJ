@@ -5,6 +5,8 @@ class Main {
     private static int N;
     private static final int X = 0;
     private static final int Y = 1;
+    private static final int BIT = 7;
+    private static final int MASK = 127;
     private static final int POINT = 46;
     private static final int SPACE = 32;
     private static final int PRECISION = 10;
@@ -30,7 +32,7 @@ class Main {
         
         for (int u = 0; u + 1 < N; u++)
             for (int v = u + 1; v < N; v++)
-                graph[u][v] = graph[v][u] = getLength(u, v, stars);
+                graph[u][v] = getDistance(u, v, stars);
 
         System.out.print(prim(graph));
 
@@ -44,22 +46,22 @@ class Main {
         Heap edges = new Heap();
         BinaryVisited visited = new BinaryVisited(N);
 
-        edges.offer(new Edge(0, 0));
+        edges.offer(0);
 
         while (edgeCount > 0) {
 
-            Edge edge = edges.poll();
-            int u = edge.vertex;
+            long edge = edges.poll();
+            int u = (int) (edge & MASK);
 
             if (visited.isVisited(u)) continue;
             visited.visit(u);
 
-            mst += sqrt(edge.length * 0.0001);
+            mst += sqrt((edge >> BIT) * 0.0001);
             edgeCount--;
 
             for (int v = 0; v < N; v++)
-                if (!visited.isVisited(v))
-                    edges.offer(new Edge(v, graph[u][v]));
+                if (!visited.isVisited(v) && graph[u][v] > 0)
+                    edges.offer(graph[u][v] << BIT | v);
 
         }
         
@@ -67,7 +69,7 @@ class Main {
 
     }
 
-    private static long getLength(int u, int v, int[][] stars) {
+    private static long getDistance(int u, int v, int[][] stars) {
         long dx = stars[u][X] - stars[v][X];
         long dy = stars[u][Y] - stars[v][Y];
         return dx * dx + dy * dy;
@@ -120,29 +122,13 @@ class BinaryVisited {
 
 }
 
-class Edge {
-
-    int vertex;
-    long length;
-
-    Edge(int v, long l) {
-        vertex = v;
-        length = l;
-    }
-
-}
-
 class Heap {
 
     private int size = 0;
     private int length = 16;
-    private Edge[] heap = new Edge[length];
+    private long[] heap = new long[length];
 
-    boolean isEmpty() {
-        return size == 0;
-    }
-
-    void offer(Edge element) {
+    void offer(long element) {
 
         if (++size == length)
             expandHeapSize();
@@ -156,14 +142,14 @@ class Heap {
 
     }
 
-    Edge poll() {
+    long poll() {
 
         int index = 1;
-        Edge element = heap[index];
+        long element = heap[index];
         heap[index] = heap[size--];
 
         while ((index <<= 1) <= size) {
-            if (index < size && heap[index].length > heap[index + 1].length) index++;
+            if (index < size && heap[index] > heap[index + 1]) index++;
             if (!swap(index)) break;
         }
 
@@ -175,10 +161,10 @@ class Heap {
 
         int parentIndex = childIndex >> 1;
 
-        Edge parentValue = heap[parentIndex];
-        Edge childValue = heap[childIndex];
+        long parentValue = heap[parentIndex];
+        long childValue = heap[childIndex];
 
-        if (parentValue.length < childValue.length)
+        if (parentValue < childValue)
             return false;
 
         heap[parentIndex] = childValue;
@@ -190,8 +176,8 @@ class Heap {
 
     private void expandHeapSize() {
 
-        Edge[] tempHeap = heap;
-        heap = new Edge[length << 1];
+        long[] tempHeap = heap;
+        heap = new long[length << 1];
 
         for (int i = 0; i < length; i++)
             heap[i] = tempHeap[i];

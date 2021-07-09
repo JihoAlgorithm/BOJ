@@ -20,21 +20,21 @@ class Main {
         double[][] graph = new double[N][N];
         Heap edges = new Heap();
 
-        for (int integer, fractional, i = 0; i < N; i++) {
+        for (int n, f, i = 0; i < N; i++) {
 
-            integer = read(POINT);
-            if ((fractional = read(SPACE)) < 10) fractional = (fractional << 3) + (fractional << 1);
-            stars[i][X] = (integer << 6) + (integer << 5) + (integer << 2) + fractional;
+            n = read(POINT);
+            if ((f = read(SPACE)) < 10) f = (f << 3) + (f << 1);
+            stars[i][X] = (n << 6) + (n << 5) + (n << 2) + f;
 
-            integer = read(POINT);
-            if ((fractional = read(SPACE)) < 10) fractional = (fractional << 3) + (fractional << 1);
-            stars[i][Y] = (integer << 6) + (integer << 5) + (integer << 2) + fractional;
+            n = read(POINT);
+            if ((f = read(SPACE)) < 10) f = (f << 3) + (f << 1);
+            stars[i][Y] = (n << 6) + (n << 5) + (n << 2) + f;
 
         }
         
         for (int u = 0; u + 1 < N; u++)
             for (int v = u + 1; v < N; v++)
-                edges.offer(new Edge(u, v, getLength(u, v, stars)));
+                edges.offer(getEdge(u, v, stars));
 
         System.out.print(kruskal(graph, edges));
 
@@ -50,10 +50,13 @@ class Main {
 
         while (edgeCount > 1) {
 
-            Edge edge = edges.poll();
+            long edge = edges.poll();
 
-            if (union(edge.v >> BIT, edge.v & MASK, disjointSet)) {
-                mst += edge.d;
+            int u = (int) ((edge >> BIT) & MASK);
+            int v = (int) (edge & MASK);
+
+            if (union(u, v, disjointSet)) {
+                mst += sqrt(edge >> BIT >> BIT);
                 edgeCount--;
             }
 
@@ -85,18 +88,23 @@ class Main {
         return s[u] < 0 ? u : (s[u] = find(s[u], s));
     }
 
-    private static double getLength(int u, int v, int[][] stars) {
-        long dx = stars[u][X] - stars[v][X];
-        long dy = stars[u][Y] - stars[v][Y];
-        return sqrt((dx * dx + dy * dy) * 0.0001);
+    private static long getEdge(int u, int v, int[][] stars) {
+        return (getDistance(u, v, stars) << BIT | u) << BIT | v;
     }
 
-    private static double sqrt(double n) {
+    private static long getDistance(int u, int v, int[][] stars) {
+        long dx = stars[u][X] - stars[v][X];
+        long dy = stars[u][Y] - stars[v][Y];
+        return dx * dx + dy * dy;
+    }
+
+    private static double sqrt(double d) {
 
         double x = PRECISION;
+        d *= 0.0001;
 
         for (int i = 0; i < PRECISION; i++)
-            x = 0.5 * (n / x + x);
+            x = 0.5 * (d / x + x);
 
         return x;
 
@@ -115,82 +123,70 @@ class Main {
 
     }
 
-    private static class Edge {
+}
 
-        int v;
-        double d;
+class Heap {
     
-        Edge(int u, int v, double d) {
-            this.v = u << BIT | v;
-            this.d = d;
-        }
-    
+    private int size = 0;
+    private int length = 16;
+    private long[] heap = new long[length];
+
+    void offer(long element) {
+
+        if (++size == length)
+            expandHeapSize();
+
+        heap[size] = element;
+
+        int index = size << 1;
+
+        while ((index >>= 1) > 1)
+            if (!swap(index)) break;
+
     }
-    
-    private static class Heap {
-    
-        private int size = 0;
-        private int length = 16;
-        private Edge[] heap = new Edge[length];
-    
-        void offer(Edge element) {
-    
-            if (++size == length)
-                expandHeapSize();
-    
-            heap[size] = element;
-    
-            int index = size << 1;
-    
-            while ((index >>= 1) > 1)
-                if (!swap(index)) break;
-    
+
+    long poll() {
+
+        int index = 1;
+        long element = heap[index];
+        heap[index] = heap[size--];
+
+        while ((index <<= 1) <= size) {
+            if (index < size && heap[index] > heap[index + 1]) index++;
+            if (!swap(index)) break;
         }
-    
-        Edge poll() {
-    
-            int index = 1;
-            Edge element = heap[index];
-            heap[index] = heap[size--];
-    
-            while ((index <<= 1) <= size) {
-                if (index < size && heap[index].d > heap[index + 1].d) index++;
-                if (!swap(index)) break;
-            }
-    
-            return element;
-    
-        }
-    
-        private boolean swap(int childIndex) {
-    
-            int parentIndex = childIndex >> 1;
-    
-            Edge parentValue = heap[parentIndex];
-            Edge childValue = heap[childIndex];
-    
-            if (parentValue.d < childValue.d)
-                return false;
-    
-            heap[parentIndex] = childValue;
-            heap[childIndex] = parentValue;
-    
-            return true;
-    
-        }
-    
-        private void expandHeapSize() {
-    
-            Edge[] tempHeap = heap;
-            heap = new Edge[length << 1];
-    
-            for (int i = 0; i < length; i++)
-                heap[i] = tempHeap[i];
-    
-            length <<= 1;
-    
-        }
-    
+
+        return element;
+
+    }
+
+    private boolean swap(int childIndex) {
+
+        int parentIndex = childIndex >> 1;
+
+        long parentValue = heap[parentIndex];
+        long childValue = heap[childIndex];
+
+        if (parentValue < childValue)
+            return false;
+
+        heap[parentIndex] = childValue;
+        heap[childIndex] = parentValue;
+
+        return true;
+
+    }
+
+    private void expandHeapSize() {
+
+        long[] tempHeap = heap;
+        heap = new long[length << 1];
+
+        for (int i = 0; i < length; i++)
+            heap[i] = tempHeap[i];
+
+        length <<= 1;
+
     }
 
 }
