@@ -6,23 +6,21 @@ class MyHeap {
 
         int K = read();
         int N = read();
+        long top = 0;
 
-        Heap pq = new Heap(N);
-        long[] number = new long[K];
+        Heap pq = new Heap();
+        int[] number = new int[K];
 
         for (int i = 0; i < K; i++)
             pq.offer(number[i] = read());
 
-        long top = 0;
-
-        while (N-- > 0) {
+        while (N-->0) {
 
             top = pq.poll();
 
             for (int i = 0; i < K; i++) {
 
                 pq.offer(top * number[i]);
-
                 if (top % number[i] == 0) break;
 
             }
@@ -40,8 +38,6 @@ class MyHeap {
         while ((c = System.in.read()) > 32)
             n = (n << 3) + (n << 1) + (c & 15);
 
-        if (c == 13) System.in.read();
-
         return n;
 
     }
@@ -50,21 +46,16 @@ class MyHeap {
 
 class Heap {
 
-    private int size = 0;
-    private int length = 0;
-    private long[] heap;
+    private static final int MAX = 200000;
 
-    Heap(int N) {
-        length = N << 1;
-        heap = new long[length];
-    }
+    int size = 0;
+    private long[] heap = new long[MAX];
 
     void offer(long element) {
 
-        if (++size == length)
-            expandHeapSize();
+        if (size + 1 == MAX) return;
 
-        heap[size] = element;
+        heap[++size] = element;
 
         int index = size << 1;
 
@@ -101,18 +92,6 @@ class Heap {
         heap[childIndex] = parentValue;
 
         return true;
-
-    }
-
-    private void expandHeapSize() {
-
-        long[] tempHeap = heap;
-        heap = new long[length + (length >> 1)];
-
-        for (int i = 1; i < length; i++)
-            heap[i] = tempHeap[i];
-
-        length += length >> 1;
 
     }
 
