@@ -17,7 +17,6 @@ class Main {
 
         setMap();
         setEdge();
-
         System.out.print(kruskal());
 
     }
@@ -40,13 +39,12 @@ class Main {
 
             if (union(u, v, disjointSet)) {
                 mst += edgeStatus >> BIT >> BIT;
-                if (--edgeCount == 1)
-                    return mst;
+                edgeCount--;
             }
 
         }
 
-        return -1;
+        return edgeCount > 1 ? -1 : mst;
 
     }
 
@@ -64,6 +62,7 @@ class Main {
         }
 
         return true;
+
     }
 
     private static int find(int u, int[] s) {
@@ -76,37 +75,33 @@ class Main {
         M = read();
         map = new int[N][M];
 
-        for (int r = 0; r < N; r++) {
-            for (int c = 0; c < M; c++) {
-                if (System.in.read() == 49) {
-                    map[r][c] = DEFAULT;
-                }
-                System.in.read();
-            }
-            System.in.read();
-        }
+        int[] visited = new int[N];
 
         for (int r = 0; r < N; r++)
             for (int c = 0; c < M; c++)
-                if (map[r][c] < 0)
-                    dfs(r, c, ++ISLAND);
+                map[r][c] = read();
+
+        for (int r = 0; r < N; r++)
+            for (int c = 0; c < M; c++)
+                if (map[r][c] > 0 && !isVisited(r, c, visited))
+                    dfs(r, c, ++ISLAND, map, visited);
 
     }
 
-    private static void dfs(int r, int c, int islandNumber) {
+    private static void dfs(int r, int c, int islandNumber, int[][] map, int[] visited) {
 
         map[r][c] = islandNumber;
+        visited[r] |= 1 << c;
 
         for (int d = 0; d < 4; d++) {
 
             int nr = r + dr[d];
             int nc = c + dc[d];
 
-            if (isOut(nr, nc))
+            if (isOut(nr, nc) || map[nr][nc] == 0 || isVisited(nr, nc, visited))
                 continue;
 
-            if (map[nr][nc] < 0)
-                dfs(nr, nc, islandNumber);
+            dfs(nr, nc, islandNumber, map, visited);
 
         }
 
@@ -139,7 +134,7 @@ class Main {
                 if (isOut(nr += dr[d], nc += dc[d]) || (mapValue = map[nr][nc]) == islandNumber)
                     break;
 
-                if ((mapValue = map[nr][nc]) > 0) {
+                if (mapValue > 0) {
                     if (len > 1)
                         edges.offer(getEdgeEncodeValue(islandNumber, mapValue, len));
                     break;
@@ -159,6 +154,10 @@ class Main {
 
     private static boolean isOut(int r, int c) {
         return r < 0 || c < 0 || r >= N || c >= M;
+    }
+
+    private static boolean isVisited(int r, int c, int[] visited) {
+        return (visited[r] & (1 << c)) != 0;
     }
 
     private static int read() throws Exception {
