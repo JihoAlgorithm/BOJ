@@ -1,0 +1,1 @@
+for s in open(0):print('yes'if'problem'in s.lower()else'no')
